@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.GeoDataClient;
@@ -75,19 +76,26 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 List<Place> options = getPlaceData();
-                chooseWinner(options);
+                if (!options.isEmpty()) {
+                    chooseWinner(options);
+                } else {
+                    Toast.makeText(MainActivity.this, "List is Empty", Toast.LENGTH_SHORT).show();
+                }
 
             }
         });
     }
 
-    public void chooseWinner(List<Place> choices) {
+    public int chooseWinner(List<Place> choices) {
         //Pick random restaurant from list of restaurants
-        Place winner = choices.get(new Random().nextInt(choices.size()));
+        int position = choices.indexOf(new Random().nextInt(choices.size()));
+        Place winner = choices.get(position);
 
         //Set winning restaurant to the appropriate text view
         tv_winner = findViewById(R.id.tv_winner);
         tv_winner.setText(winner.getName());
+        System.out.println(position);
+        return position;
     }
 
     @SuppressLint("MissingPermission")
@@ -104,12 +112,18 @@ public class MainActivity extends AppCompatActivity {
                 for (PlaceLikelihood placeLikelihood : likelyPlaces) {
                     placesList.add(placeLikelihood.getPlace().freeze());
                 }
+
                 likelyPlaces.release();
 
             }
         });
         return placesList;
 
+    }
+
+    public void findPlaces() {
+
+        List<Place> foundPlaces =
     }
 
 }
