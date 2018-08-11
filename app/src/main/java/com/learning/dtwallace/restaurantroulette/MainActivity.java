@@ -28,6 +28,10 @@ import com.google.android.gms.location.places.Places;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -41,13 +45,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     List<Place> Restaurants = new ArrayList<>();
     TextView tv_winner;
-    Button chooseButton;
+    Button chooseButton, apiSearchButton;
     GeoDataClient mGeoDataClient;
     PlaceDetectionClient mPlaceDetectionClient;
     GoogleApiClient mGoogleApiClient;
     String TAG = "MainActivity";
     final String placesUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
-            "location=-33.8670522,151.1957362&radius=1500&type=restaurant&keyword=cruise&key=AIzaSyB_EyW-vdFNaB8pBtFATDWg5NPqZWKoyPg";
+            "location=-33.8670522,151.1957362&radius=1500&type=restaurant&keyword=cruise&key=" + BuildConfig.GoogleSecAPIKey;
     private int MY_PERMISSIONS_ACCESS_LOCATION;
 
 
@@ -58,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
         // Assign button id
         chooseButton = findViewById(R.id.button_choose);
+        apiSearchButton = findViewById(R.id.apiButton);
 
         tv_winner = findViewById(R.id.tv_winner);
 
@@ -105,9 +110,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                         }
 
                         int i = 0;
+
                         for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                            Restaurants.add(placeLikelihood.getPlace());
-                            i++;
+                            if(placeLikelihood.getPlace().getPlaceTypes().contains(79)) {
+                                Restaurants.add(placeLikelihood.getPlace());
+                                i++;
+                            }
 
                             Log.i(TAG, String.format("Place '%s' has likelihood: %g",
                                     placeLikelihood.getPlace().getName(),
@@ -117,13 +125,27 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                             }
                         }
 
-                        Place winnerPlace = (Restaurants.get(new Random().nextInt(Restaurants.size())));
-                        tv_winner.setText(winnerPlace.getName());
-                        Restaurants.clear();
+                        if (Restaurants.size() != 0) {
+                            Place winnerPlace = (Restaurants.get(new Random().nextInt(Restaurants.size())));
+                            String winnerText = (winnerPlace.getName() + ", " + winnerPlace.getPlaceTypes());
+                            tv_winner.setText(winnerText);
+                            Restaurants.clear();
+                        } else {
+                            Toast.makeText(MainActivity.this, "No places nearby", Toast.LENGTH_SHORT).show();
+                        }
 
                         likelyPlaces.release();
                     }
                 });
+            }
+        });
+
+        apiSearchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                testUrl();
+
+
             }
         });
     }
@@ -135,6 +157,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Toast.makeText(this,"Connection failed", Toast.LENGTH_SHORT).show();
+    }
+
+    public void testUrl() {
+
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(placesUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            Toast.makeText(this, "Connection Successful", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            urlConnection.disconnect();
+        }
     }
 }
 
